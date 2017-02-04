@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"plugin"
@@ -16,6 +17,25 @@ func (ps Plugins) ByName(name string) Plugin {
 	return Plugin{}
 }
 
+func LoadPluginsWalk(pluginsRoot string) (Plugins, error) {
+	var ps Plugins
+	err := filepath.Walk(pluginsRoot, func(filePath string, file os.FileInfo, err error) error {
+		if filepath.Ext(file.Name()) != ".so" {
+			return nil
+		}
+		p, err := LoadPlugin(filePath)
+		if err != nil {
+			return err
+		}
+		ps = append(ps, p)
+		return nil
+	})
+	if err != nil {
+		return Plugins{}, err
+	}
+	return ps, nil
+}
+
 func LoadPlugins(pluginsPath string) (Plugins, error) {
 	var ps Plugins
 	pluginFiles, err := ioutil.ReadDir(pluginsPath)
@@ -26,11 +46,11 @@ func LoadPlugins(pluginsPath string) (Plugins, error) {
 		if filepath.Ext(file.Name()) != ".so" {
 			continue
 		}
-		data, err := LoadPlugin(path.Join(pluginsPath, file.Name()))
+		p, err := LoadPlugin(path.Join(pluginsPath, file.Name()))
 		if err != nil {
 			return Plugins{}, err
 		}
-		ps = append(ps, data)
+		ps = append(ps, p)
 	}
 	return ps, nil
 }
