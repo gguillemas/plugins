@@ -14,4 +14,5 @@ type PluginMetadata struct {
 	Name        string
 	Version     string
 	Description string
+	Attributes  map[string]interface{}
 }
